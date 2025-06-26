@@ -60,11 +60,20 @@
         stage('Deploy to IIS') {
             steps {
                 powershell '''
-                    # Tạo website nếu chưa có
+                    # Import WebAdministration module
                     Import-Module WebAdministration
-                    if (-not (Get-Website -Name "MySite" -ErrorAction SilentlyContinue)) {
-                        New-Website -Name "MySite" -Port 81 -PhysicalPath "c:\\wwwroot\\myproject"
+                    
+                    # Check if MySite exists and remove it
+                    if (Get-Website -Name "MySite" -ErrorAction SilentlyContinue) {
+                        Write-Host "MySite exists, removing old site..."
+                        Remove-Website -Name "MySite"
+                        Write-Host "Old MySite removed successfully"
                     }
+                    
+                    # Create new MySite
+                    Write-Host "Creating new MySite..."
+                    New-Website -Name "MySite" -Port 81 -PhysicalPath "c:\\wwwroot\\myproject"
+                    Write-Host "New MySite created successfully"
                 '''
             }
         } // end deploy iis
