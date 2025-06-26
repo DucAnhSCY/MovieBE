@@ -1,7 +1,7 @@
-﻿pipeline {
+﻿
+pipeline {
     agent any
-    stages {
-        stage('clone'){
+    stages {        stage('clone'){
             steps {
                 echo 'Cloning source code'
                 git branch:'master', url: 'https://github.com/DucAnhSCY/MovieBE.git'
@@ -36,7 +36,7 @@
                 bat 'dotnet test MovieBE.csproj --configuration Release --verbosity normal'
             }
         }
-        stage ('publish to temp folder') {
+          stage ('publish to temp folder') {
             steps{
                 echo 'Publishing...'
                 // Clean the publish directory first and remove any conflicting cache files
@@ -47,7 +47,7 @@
                 bat 'dotnet publish MovieBE.csproj -c Release -o publish --no-restore --force'
             }
         }
-        stage ('Copy to IIS folder') {
+          stage ('Copy to IIS folder') {
             steps {
                 echo 'Copy to running folder'
                 // Stop IIS first to avoid file locks
