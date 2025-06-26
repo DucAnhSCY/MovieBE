@@ -1,6 +1,7 @@
 ﻿pipeline {
     agent any
-    stages {        stage('clone'){
+    stages {
+        stage('clone'){
             steps {
                 echo 'Cloning source code'
                 git branch:'master', url: 'https://github.com/DucAnhSCY/MovieBE.git'
@@ -35,7 +36,7 @@
                 bat 'dotnet test MovieBE.csproj --configuration Release --verbosity normal'
             }
         }
-          stage ('publish to temp folder') {
+        stage ('publish to temp folder') {
             steps{
                 echo 'Publishing...'
                 // Clean the publish directory first and remove any conflicting cache files
@@ -46,7 +47,7 @@
                 bat 'dotnet publish MovieBE.csproj -c Release -o publish --no-restore --force'
             }
         }
-          stage ('Copy to IIS folder') {
+        stage ('Copy to IIS folder') {
             steps {
                 echo 'Copy to running folder'
                 // Stop IIS first to avoid file locks
@@ -60,20 +61,11 @@
         stage('Deploy to IIS') {
             steps {
                 powershell '''
-                    # Import WebAdministration module
+                    # Tạo website nếu chưa có
                     Import-Module WebAdministration
-                    
-                    # Check if MySite exists and remove it
-                    if (Get-Website -Name "MySite" -ErrorAction SilentlyContinue) {
-                        Write-Host "MySite exists, removing old site..."
-                        Remove-Website -Name "MySite"
-                        Write-Host "Old MySite removed successfully"
+                    if (-not (Get-Website -Name "MySite" -ErrorAction SilentlyContinue)) {
+                        New-Website -Name "MySite" -Port 81 -PhysicalPath "c:\\wwwroot\\myproject"
                     }
-                    
-                    # Create new MySite
-                    Write-Host "Creating new MySite..."
-                    New-Website -Name "MySite" -Port 81 -PhysicalPath "c:\\wwwroot\\myproject"
-                    Write-Host "New MySite created successfully"
                 '''
             }
         } // end deploy iis
