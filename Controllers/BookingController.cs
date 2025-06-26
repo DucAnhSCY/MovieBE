@@ -5,7 +5,9 @@ using MovieBookingTIcket.Models2;
 
 namespace MovieBookingTIcket.Controllers
 {
-    public class BookingController : Controller
+    [ApiController]
+    [Route("api/[controller]")]
+    public class BookingController : ControllerBase
     {
         private readonly DBContextTest _context;
 
@@ -14,22 +16,28 @@ namespace MovieBookingTIcket.Controllers
             _context = context;
         }
 
-        // GET: Booking
-        public async Task<IActionResult> Index()
+        // GET: api/Booking
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Booking>>> GetBookings()
         {
             var bookings = await _context.Bookings
                 .Include(b => b.Show)
+                .ThenInclude(s => s.Movie)
+                .Include(b => b.Show)
+                .ThenInclude(s => s.Screen)
+                .ThenInclude(sc => sc.Theatre)
                 .Include(b => b.User)
                 .ToListAsync();
-            return View(bookings);
+            return Ok(bookings);
         }
 
-        // GET: Booking/Details/5
-        public async Task<IActionResult> Details(string id)
+        // GET: api/Booking/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Booking>> GetBooking(string id)
         {
-            if (id == null)
+            if (string.IsNullOrEmpty(id))
             {
-                return NotFound();
+                return BadRequest("Booking ID cannot be null or empty");
             }
 
             var booking = await _context.Bookings
@@ -39,164 +47,80 @@ namespace MovieBookingTIcket.Controllers
                 .ThenInclude(s => s.Screen)
                 .ThenInclude(sc => sc.Theatre)
                 .Include(b => b.User)
-                .Include(b => b.Tickets)
                 .FirstOrDefaultAsync(m => m.BookingId == id);
 
             if (booking == null)
             {
-                return NotFound();
+                return NotFound($"Booking with ID {id} not found");
             }
 
-            return View(booking);
+            return Ok(booking);
         }
 
-        // GET: Booking/Create
-        public IActionResult Create()
-        {
-            ViewData["ShowId"] = new SelectList(_context.Shows
-                .Include(s => s.Movie)
-                .Include(s => s.Screen)
-                .ThenInclude(sc => sc.Theatre)
-                .Select(s => new {
-                    s.ShowId,
-                    DisplayText = $"{s.Movie.Name} - {s.Screen.Theatre.NameOfTheatre} - {s.ShowDate} {s.ShowTime}"
-                }), "ShowId", "DisplayText");
-            
-            ViewData["UserId"] = new SelectList(_context.WebUsers, "WebUserId", "FirstName");
-            return View();
-        }
-
-        // POST: Booking/Create
+        // POST: api/Booking
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("BookingId,NoOfTickets,TotalCost,CardNumber,NameOnCard,UserId,ShowId")] Booking booking)
+        public async Task<ActionResult<Booking>> CreateBooking([FromBody] Booking booking)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                _context.Add(booking);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                return BadRequest(ModelState);
             }
-            
-            ViewData["ShowId"] = new SelectList(_context.Shows
-                .Include(s => s.Movie)
-                .Include(s => s.Screen)
-                .ThenInclude(sc => sc.Theatre)
-                .Select(s => new {
-                    s.ShowId,
-                    DisplayText = $"{s.Movie.Name} - {s.Screen.Theatre.NameOfTheatre} - {s.ShowDate} {s.ShowTime}"
-                }), "ShowId", "DisplayText", booking.ShowId);
-            
-            ViewData["UserId"] = new SelectList(_context.WebUsers, "WebUserId", "FirstName", booking.UserId);
-            return View(booking);
+
+            _context.Bookings.Add(booking);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetBooking), new { id = booking.BookingId }, booking);
         }
 
-        // GET: Booking/Edit/5
-        public async Task<IActionResult> Edit(string id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var booking = await _context.Bookings.FindAsync(id);
-            if (booking == null)
-            {
-                return NotFound();
-            }
-            
-            ViewData["ShowId"] = new SelectList(_context.Shows
-                .Include(s => s.Movie)
-                .Include(s => s.Screen)
-                .ThenInclude(sc => sc.Theatre)
-                .Select(s => new {
-                    s.ShowId,
-                    DisplayText = $"{s.Movie.Name} - {s.Screen.Theatre.NameOfTheatre} - {s.ShowDate} {s.ShowTime}"
-                }), "ShowId", "DisplayText", booking.ShowId);
-            
-            ViewData["UserId"] = new SelectList(_context.WebUsers, "WebUserId", "FirstName", booking.UserId);
-            return View(booking);
-        }
-
-        // POST: Booking/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(string id, [Bind("BookingId,NoOfTickets,TotalCost,CardNumber,NameOnCard,UserId,ShowId")] Booking booking)
+        // PUT: api/Booking/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateBooking(string id, [FromBody] Booking booking)
         {
             if (id != booking.BookingId)
             {
-                return NotFound();
+                return BadRequest("Booking ID mismatch");
             }
 
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                try
-                {
-                    _context.Update(booking);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!BookingExists(booking.BookingId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
+                return BadRequest(ModelState);
             }
-            
-            ViewData["ShowId"] = new SelectList(_context.Shows
-                .Include(s => s.Movie)
-                .Include(s => s.Screen)
-                .ThenInclude(sc => sc.Theatre)
-                .Select(s => new {
-                    s.ShowId,
-                    DisplayText = $"{s.Movie.Name} - {s.Screen.Theatre.NameOfTheatre} - {s.ShowDate} {s.ShowTime}"
-                }), "ShowId", "DisplayText", booking.ShowId);
-            
-            ViewData["UserId"] = new SelectList(_context.WebUsers, "WebUserId", "FirstName", booking.UserId);
-            return View(booking);
+
+            _context.Entry(booking).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!BookingExists(booking.BookingId))
+                {
+                    return NotFound($"Booking with ID {id} not found");
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
         }
 
-        // GET: Booking/Delete/5
-        public async Task<IActionResult> Delete(string id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var booking = await _context.Bookings
-                .Include(b => b.Show)
-                .ThenInclude(s => s.Movie)
-                .Include(b => b.User)
-                .FirstOrDefaultAsync(m => m.BookingId == id);
-            
-            if (booking == null)
-            {
-                return NotFound();
-            }
-
-            return View(booking);
-        }
-
-        // POST: Booking/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(string id)
+        // DELETE: api/Booking/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteBooking(string id)
         {
             var booking = await _context.Bookings.FindAsync(id);
-            if (booking != null)
+            if (booking == null)
             {
-                _context.Bookings.Remove(booking);
+                return NotFound($"Booking with ID {id} not found");
             }
 
+            _context.Bookings.Remove(booking);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+
+            return NoContent();
         }
 
         private bool BookingExists(string id)

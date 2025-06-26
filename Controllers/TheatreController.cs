@@ -4,7 +4,9 @@ using MovieBookingTIcket.Models2;
 
 namespace MovieBookingTIcket.Controllers
 {
-    public class TheatreController : Controller
+    [ApiController]
+    [Route("api/[controller]")]
+    public class TheatreController : ControllerBase
     {
         private readonly DBContextTest _context;
 
@@ -13,137 +15,35 @@ namespace MovieBookingTIcket.Controllers
             _context = context;
         }
 
-        // GET: Theatre
-        public async Task<IActionResult> Index()
+        // GET: api/Theatre
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Theatre>>> GetTheatres()
         {
             var theatres = await _context.Theatres
                 .Include(t => t.Screens)
                 .ToListAsync();
-            return View(theatres);
+            return Ok(theatres);
         }
 
-        // GET: Theatre/Details/5
-        public async Task<IActionResult> Details(string id)
+        // GET: api/Theatre/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Theatre>> GetTheatre(string id)
         {
-            if (id == null)
+            if (string.IsNullOrEmpty(id))
             {
-                return NotFound();
+                return BadRequest("Theatre ID cannot be null or empty");
             }
 
             var theatre = await _context.Theatres
                 .Include(t => t.Screens)
-                .ThenInclude(s => s.Shows)
-                .ThenInclude(sh => sh.Movie)
                 .FirstOrDefaultAsync(m => m.TheatreId == id);
 
             if (theatre == null)
             {
-                return NotFound();
+                return NotFound($"Theatre with ID {id} not found");
             }
 
-            return View(theatre);
-        }
-
-        // GET: Theatre/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: Theatre/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("TheatreId,NameOfTheatre,NoOfScreens,Area")] Theatre theatre)
-        {
-            if (ModelState.IsValid)
-            {
-                _context.Add(theatre);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(theatre);
-        }
-
-        // GET: Theatre/Edit/5
-        public async Task<IActionResult> Edit(string id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var theatre = await _context.Theatres.FindAsync(id);
-            if (theatre == null)
-            {
-                return NotFound();
-            }
-            return View(theatre);
-        }
-
-        // POST: Theatre/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(string id, [Bind("TheatreId,NameOfTheatre,NoOfScreens,Area")] Theatre theatre)
-        {
-            if (id != theatre.TheatreId)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(theatre);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!TheatreExists(theatre.TheatreId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(theatre);
-        }
-
-        // GET: Theatre/Delete/5
-        public async Task<IActionResult> Delete(string id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var theatre = await _context.Theatres
-                .FirstOrDefaultAsync(m => m.TheatreId == id);
-            if (theatre == null)
-            {
-                return NotFound();
-            }
-
-            return View(theatre);
-        }
-
-        // POST: Theatre/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(string id)
-        {
-            var theatre = await _context.Theatres.FindAsync(id);
-            if (theatre != null)
-            {
-                _context.Theatres.Remove(theatre);
-            }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return Ok(theatre);
         }
 
         private bool TheatreExists(string id)

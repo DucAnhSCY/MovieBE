@@ -4,7 +4,9 @@ using MovieBookingTIcket.Models2;
 
 namespace MovieBookingTIcket.Controllers
 {
-    public class UserController : Controller
+    [ApiController]
+    [Route("api/[controller]")]
+    public class UserController : ControllerBase
     {
         private readonly DBContextTest _context;
 
@@ -13,19 +15,21 @@ namespace MovieBookingTIcket.Controllers
             _context = context;
         }
 
-        // GET: User
-        public async Task<IActionResult> Index()
+        // GET: api/User
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<WebUser>>> GetUsers()
         {
             var users = await _context.WebUsers.ToListAsync();
-            return View(users);
+            return Ok(users);
         }
 
-        // GET: User/Details/5
-        public async Task<IActionResult> Details(string id)
+        // GET: api/User/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<WebUser>> GetUser(string id)
         {
-            if (id == null)
+            if (string.IsNullOrEmpty(id))
             {
-                return NotFound();
+                return BadRequest("User ID cannot be null or empty");
             }
 
             var user = await _context.WebUsers
@@ -36,112 +40,10 @@ namespace MovieBookingTIcket.Controllers
 
             if (user == null)
             {
-                return NotFound();
+                return NotFound($"User with ID {id} not found");
             }
 
-            return View(user);
-        }
-
-        // GET: User/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: User/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("WebUserId,FirstName,LastName,EmailId,Age,PhoneNumber")] WebUser user)
-        {
-            if (ModelState.IsValid)
-            {
-                _context.Add(user);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(user);
-        }
-
-        // GET: User/Edit/5
-        public async Task<IActionResult> Edit(string id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var user = await _context.WebUsers.FindAsync(id);
-            if (user == null)
-            {
-                return NotFound();
-            }
-            return View(user);
-        }
-
-        // POST: User/Edit/5
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(string id, [Bind("WebUserId,FirstName,LastName,EmailId,Age,PhoneNumber")] WebUser user)
-        {
-            if (id != user.WebUserId)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(user);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!UserExists(user.WebUserId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(user);
-        }
-
-        // GET: User/Delete/5
-        public async Task<IActionResult> Delete(string id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var user = await _context.WebUsers
-                .FirstOrDefaultAsync(m => m.WebUserId == id);
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            return View(user);
-        }
-
-        // POST: User/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(string id)
-        {
-            var user = await _context.WebUsers.FindAsync(id);
-            if (user != null)
-            {
-                _context.WebUsers.Remove(user);
-            }
-
-            await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return Ok(user);
         }
 
         private bool UserExists(string id)
