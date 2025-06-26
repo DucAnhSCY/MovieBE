@@ -1,7 +1,7 @@
-﻿
-pipeline {
+﻿pipeline {
     agent any
-    stages {        stage('clone'){
+    stages {
+        stage('clone'){
             steps {
                 echo 'Cloning source code'
                 git branch:'master', url: 'https://github.com/DucAnhSCY/MovieBE.git'
@@ -36,7 +36,7 @@ pipeline {
                 bat 'dotnet test MovieBE.csproj --configuration Release --verbosity normal'
             }
         }
-          stage ('publish to temp folder') {
+        stage ('publish to temp folder') {
             steps{
                 echo 'Publishing...'
                 // Clean the publish directory first and remove any conflicting cache files
@@ -47,7 +47,7 @@ pipeline {
                 bat 'dotnet publish MovieBE.csproj -c Release -o publish --no-restore --force'
             }
         }
-          stage ('Copy to IIS folder') {
+        stage ('Copy to IIS folder') {
             steps {
                 echo 'Copy to running folder'
                 // Stop IIS first to avoid file locks
@@ -61,11 +61,19 @@ pipeline {
         stage('Deploy to IIS') {
             steps {
                 powershell '''
-                    # Tạo website nếu chưa có
+                    # Import WebAdministration module
                     Import-Module WebAdministration
-                    if (-not (Get-Website -Name "MySite" -ErrorAction SilentlyContinue)) {
-                        New-Website -Name "MySite" -Port 81 -PhysicalPath "c:\\wwwroot\\myproject"
+                    
+                    # Check if MySite exists and remove it
+                    if (Get-Website -Name "MySite" -ErrorAction SilentlyContinue) {
+                        Write-Host "Removing existing MySite..."
+                        Remove-Website -Name "MySite"
                     }
+                    
+                    # Create new MySite
+                    Write-Host "Creating new MySite..."
+                    New-Website -Name "MySite" -Port 81 -PhysicalPath "c:\\wwwroot\\myproject"
+                    Write-Host "MySite created successfully."
                 '''
             }
         } // end deploy iis
