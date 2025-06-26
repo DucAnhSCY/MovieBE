@@ -19,21 +19,21 @@ pipeline {
             steps {
                 echo 'Restore package'
                 // Clean first to avoid any cache issues
-                bat 'dotnet clean gitnetcore.csproj || echo "Clean completed"'
-                bat 'dotnet restore gitnetcore.csproj'
+                bat 'dotnet clean MovieBookingTIcket.csproj || echo "Clean completed"'
+                bat 'dotnet restore MovieBookingTIcket.csproj'
             }
         }        
         stage ('build') {
             steps {
-                echo 'build project netcore'
-                bat 'dotnet build gitnetcore.csproj --configuration Release --no-restore'
+                echo 'build project MovieBookingTIcket'
+                bat 'dotnet build MovieBookingTIcket.csproj --configuration Release --no-restore'
             }
         }
         
         stage ('tests') {
             steps{
                 echo 'running test...'
-                bat 'dotnet test gitnetcore.csproj --configuration Release --verbosity normal'
+                bat 'dotnet test MovieBookingTIcket.csproj --configuration Release --verbosity normal'
             }
         }
           stage ('publish to temp folder') {
@@ -43,8 +43,8 @@ pipeline {
                 bat 'if exist publish rmdir /s /q publish'
                 bat 'if exist obj\\Debug\\net8.0\\rpswa.dswa.cache.json del /f /q obj\\Debug\\net8.0\\rpswa.dswa.cache.json'
                 bat 'if exist obj\\Release\\net8.0\\rpswa.dswa.cache.json del /f /q obj\\Release\\net8.0\\rpswa.dswa.cache.json'
-                bat 'dotnet clean gitnetcore.csproj --configuration Release'
-                bat 'dotnet publish gitnetcore.csproj -c Release -o publish --no-restore --force'
+                bat 'dotnet clean MovieBookingTIcket.csproj --configuration Release'
+                bat 'dotnet publish MovieBookingTIcket.csproj -c Release -o publish --no-restore --force'
             }
         }
           stage ('Copy to IIS folder') {
