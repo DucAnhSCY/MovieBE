@@ -4,7 +4,7 @@ pipeline {
     stages {        stage('clone'){
             steps {
                 echo 'Cloning source code'
-                git branch:'master', url: 'https://github.com/DucAnhSCY/MovieBookingTicket.git'
+                git branch:'master', url: 'https://github.com/DucAnhSCY/MovieBE.git'
                 // Clean any existing build artifacts and cache files thoroughly
                 bat 'if exist bin rmdir /s /q bin'
                 bat 'if exist obj rmdir /s /q obj'
@@ -19,21 +19,21 @@ pipeline {
             steps {
                 echo 'Restore package'
                 // Clean first to avoid any cache issues
-                bat 'dotnet clean MovieBookingTIcket.csproj || echo "Clean completed"'
-                bat 'dotnet restore MovieBookingTIcket.csproj'
+                bat 'dotnet clean MovieBE.csproj || echo "Clean completed"'
+                bat 'dotnet restore MovieBE.csproj'
             }
         }        
         stage ('build') {
             steps {
-                echo 'build project MovieBookingTIcket'
-                bat 'dotnet build MovieBookingTIcket.csproj --configuration Release --no-restore'
+                echo 'build project MovieBE'
+                bat 'dotnet build MovieBE.csproj --configuration Release --no-restore'
             }
         }
         
         stage ('tests') {
             steps{
                 echo 'running test...'
-                bat 'dotnet test MovieBookingTIcket.csproj --configuration Release --verbosity normal'
+                bat 'dotnet test MovieBE.csproj --configuration Release --verbosity normal'
             }
         }
           stage ('publish to temp folder') {
@@ -43,8 +43,8 @@ pipeline {
                 bat 'if exist publish rmdir /s /q publish'
                 bat 'if exist obj\\Debug\\net8.0\\rpswa.dswa.cache.json del /f /q obj\\Debug\\net8.0\\rpswa.dswa.cache.json'
                 bat 'if exist obj\\Release\\net8.0\\rpswa.dswa.cache.json del /f /q obj\\Release\\net8.0\\rpswa.dswa.cache.json'
-                bat 'dotnet clean MovieBookingTIcket.csproj --configuration Release'
-                bat 'dotnet publish MovieBookingTIcket.csproj -c Release -o publish --no-restore --force'
+                bat 'dotnet clean MovieBE.csproj --configuration Release'
+                bat 'dotnet publish MovieBE.csproj -c Release -o publish --no-restore --force'
             }
         }
           stage ('Copy to IIS folder') {
